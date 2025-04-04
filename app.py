@@ -62,15 +62,17 @@ def handle_message(event):
             user_sessions[user_id] = []
 
         # 準備訊息串（包含歷史）
-        history = user_sessions[user_id][-10:]  # 5次 user+assistant 共10則
+        history = user_sessions[user_id][-10:]  # 最多保留 5輪 = 10 則訊息
         history.append({"role": "user", "content": user_msg})
 
         messages = [
             {
                 "role": "system",
                 "content": (
-                    "你是一位專精於數位桌遊設計與AI繪圖的顧問。請只回答與數位桌遊設計，或是任何可以用於開發數位桌遊的工具相關的問題。"
-                    "數位桌遊設計例如：遊戲機制、規則設計、主題創意、數位轉化建議等；工具像是：playingcard.io；AI繪圖例如：工具介紹、提詞(Prompt)使用與建議等"
+                    "你是一位專精於數位桌遊設計與AI繪圖的顧問。請只回答與數位桌遊設計，"
+                    "或是任何可以用於開發數位桌遊的工具相關的問題。"
+                    "數位桌遊設計例如：遊戲機制、規則設計、主題創意、數位轉化建議等；"
+                    "工具像是：playingcard.io；AI繪圖例如：工具介紹、提詞(Prompt)使用與建議等。"
                     "對於與主題無關的問題，請回覆：『抱歉，這不是我的專業，我專門回答與數位桌遊設計相關的問題喔！』。"
                     "請將回答控制在 200 字以內。"
                 )
@@ -84,14 +86,16 @@ def handle_message(event):
         )
 
         gpt_reply = response.choices[0].message.content.strip()
+
+        # 安全限制長度（200字）
         if len(gpt_reply) > 200:
             gpt_reply = gpt_reply[:197] + "..."
 
-        # 加入回覆紀錄
+        # 記憶這一輪對話
         user_sessions[user_id].append({"role": "user", "content": user_msg})
         user_sessions[user_id].append({"role": "assistant", "content": gpt_reply})
 
-        # 限制最多保留 10 筆（5輪）
+        # 最多保留 10 筆（5輪）
         user_sessions[user_id] = user_sessions[user_id][-10:]
 
         print(f"[GPT] [{user_id}] {gpt_reply}")
@@ -103,5 +107,7 @@ def handle_message(event):
     except Exception as e:
         print("[ERROR] handle_message:", str(e))
 
+# ✅ 正確綁定 Render 所需的 PORT
 if __name__ == "__main__":
-    app.run(port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
