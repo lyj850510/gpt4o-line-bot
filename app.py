@@ -7,7 +7,7 @@ import os
 
 app = Flask(__name__)
 
-# 從環境變數讀取金鑰
+# 從環境變數取得金鑰
 LINE_CHANNEL_ACCESS_TOKEN = os.environ.get('LINE_CHANNEL_ACCESS_TOKEN')
 LINE_CHANNEL_SECRET = os.environ.get('LINE_CHANNEL_SECRET')
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
@@ -38,6 +38,14 @@ def handle_message(event):
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "你是一位專精於數位桌遊設計的顧問。請只回答與數位桌遊設計相關的問題，"
+                        "例如：遊戲機制、規則設計、主題創意、數位轉化建議等。"
+                        "對於與主題無關的問題，請回覆：『對不起，這不是我的專業。我專門回答與數位桌遊設計相關的問題喔！』"
+                    )
+                },
                 {"role": "user", "content": user_msg}
             ]
         )
