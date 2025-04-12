@@ -85,6 +85,7 @@ def handle_message(event):
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=messages
+            max_tokens=300  # ≈ 約 200～250 個中文字
         )
 
         gpt_reply = response.choices[0].message.content.strip()
