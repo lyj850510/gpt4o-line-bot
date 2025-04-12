@@ -84,7 +84,7 @@ def handle_message(event):
         # 呼叫 GPT
         response = client.chat.completions.create(
             model="gpt-4o",
-            messages=messages
+            messages=messages,
             max_tokens=300  # ≈ 約 200～250 個中文字
         )
 
