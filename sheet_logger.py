@@ -5,7 +5,7 @@ from datetime import datetime
 from oauth2client.service_account import ServiceAccountCredentials
 
 SPREADSHEET_NAME = "L101TA"
-SHEET_NAME = "工作表1"
+SHEET_NAME = "原始資料"
 
 def init_sheet():
     scope = [
