@@ -20,6 +20,9 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 # 使用者上下文記憶
 user_sessions = {}
 
+# 特權使用者白名單
+whitelist_users = {"U68ce099aa6425357d147da260811be84"}
+
 # 基本問答
 basic_responses = {
     "你好": "你好！我是你的數位桌遊設計助教，歡迎詢問任何關於桌遊設計的問題！",
@@ -67,18 +70,27 @@ def handle_message(event):
         history = user_sessions[user_id][-10:]
         history.append({"role": "user", "content": user_msg})
 
-        messages = [
-            {
+        # 根據 user_id 使用不同的 system prompt
+        if user_id in whitelist_users:
+            system_prompt = {
                 "role": "system",
                 "content": (
-                    "你是一位擅長數位桌遊設計與 AI 繪圖的顧問，能協助使用者進行數位桌遊創作，包含主題發想、規則設計、遊戲機制與轉化工具等。請盡量將回覆聚焦在這些主題上，若問題完全與本專業無關，請委婉說明。針對提問方式（如希望用條列、希望精簡），請正常回應即可，不要誤判為主題無關。"
-                    "數位桌遊設計例如：遊戲機制、規則設計、主題創意、數位轉化建議等；"
-                    "工具像是：playingcard.io；AI繪圖例如：工具介紹、提詞(Prompt)使用與建議等。"
-                    "對於與主題無關的問題，請回覆：『抱歉，這不是我的專業，我專門回答與數位桌遊設計相關的問題喔！』。"
-                    "請將每次回答控制在 200 個中文字以內，並用條列式清楚說明重點，請僅簡要列出 3~4 個重點，不要展開太多細節，並請在回答結尾時自然結束，務必不要中途被截斷導致對話沒有收尾"
+                    "你是一位智慧且樂於助人的 AI 助理，可以回答任何問題，請自然且清楚地回覆使用者問題。"
                 )
             }
-        ] + history
+        else:
+            system_prompt = {
+                "role": "system",
+                "content": (
+                    "你是一位擅長數位桌遊設計與 AI 繪圖的顧問，能協助使用者進行數位桌遊創作，"
+                    "包含主題發想、規則設計、遊戲機制與轉化工具等。請盡量將回覆聚焦在這些主題上，"
+                    "若問題完全與本專業無關，請委婉說明。針對提問方式（如希望用條列、希望精簡），請正常回應即可，"
+                    "不要誤判為主題無關。每次回覆請控制在 200 個中文字內，自然結尾。"
+                )
+            }
+
+        messages = [system_prompt] + history
+
 
         # 呼叫 GPT
         response = client.chat.completions.create(
