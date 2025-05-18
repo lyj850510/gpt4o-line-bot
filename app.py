@@ -21,7 +21,10 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 user_sessions = {}
 
 # 特權使用者白名單
-whitelist_users = {"U68ce099aa6425357d147da260811be84"}
+whitelist_users = {
+    "U68ce099aa6425357d147da260811be84",
+    "U6f73ba6b44d15bd51e1f94fa7da32309"
+}
 
 # 基本問答
 basic_responses = {
@@ -51,16 +54,17 @@ def handle_message(event):
         user_id = event.source.user_id
         print(f"[INFO] [{user_id}] {user_msg}")
 
-        # 基本問答
-        for keyword in basic_responses:
-            if keyword in user_msg:
-                reply = basic_responses[keyword]
-                line_bot_api.reply_message(
-                    event.reply_token,
-                    TextSendMessage(text=reply)
-                )
-                log_conversation(user_id, user_msg, reply)
-                return
+        # ✅ 非白名單使用者才執行基本問答
+        if user_id not in whitelist_users:
+            for keyword in basic_responses:
+                if keyword in user_msg:
+                    reply = basic_responses[keyword]
+                    line_bot_api.reply_message(
+                        event.reply_token,
+                        TextSendMessage(text=reply)
+                    )
+                    log_conversation(user_id, user_msg, reply)
+                    return
 
         # 初始化使用者上下文
         if user_id not in user_sessions:
@@ -92,16 +96,23 @@ def handle_message(event):
         messages = [system_prompt] + history
 
 
-        # 呼叫 GPT
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=messages,
-            max_tokens=300  # ≈ 約 200～250 個中文字
-        )
+        # GPT 呼叫邏輯區分
+        if user_id in whitelist_users:
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=messages
+            )
+        else:
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=messages,
+                max_tokens=300
+            )
 
         gpt_reply = response.choices[0].message.content.strip()
 
-        if len(gpt_reply) > 200:
+        # ✅ 非白名單才做字數截斷
+        if user_id not in whitelist_users and len(gpt_reply) > 200:
             gpt_reply = gpt_reply[:197] + "..."
 
         # 記憶對話
